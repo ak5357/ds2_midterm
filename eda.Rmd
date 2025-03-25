@@ -1,0 +1,245 @@
+---
+title: "Exploratory Data Analysis"
+author: "Arghya Kannadaguli (ak5357)"
+date: "2025-03-25"
+output: html_document
+---
+
+```{r setup, message = FALSE, warning = FALSE}
+# LOAD LIBRARIES
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(gt)
+library(gtsummary)
+
+# KNIT SETTINGS
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%",
+  fig.align = "center"
+)
+
+# FIGURE SETTINGS
+theme_set(
+  theme(
+    #legend.position = "bottom",
+    plot.title = element_text(hjust = 0.5, margin = margin(b = 5), face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, margin = margin(b = 10), color = "azure4", face = "bold", size = 8)
+  )
+)
+```
+
+## **Exploratory Data Analysis**
+
+##### **Load Data**
+```{r}
+load("data/dat1.RData")
+load("data/dat2.RData")
+
+dat1 = as_tibble(dat1) |> 
+  janitor::clean_names()
+dat2 = as_tibble(dat2) |> 
+  janitor::clean_names()
+```
+
+##### **Summary Statistics**
+```{r message = FALSE}
+dat1 |> 
+  tbl_summary(
+    statistic = list (all_continuous() ~ "{min} - {max} | Mean: {mean} (SD: {sd})", 
+                      all_categorical() ~ "{n} ({p}%)"),
+    label = list(
+      id = "ID (id)",
+      age = "Age (age) ",
+      gender = "Gender (gender)",
+      race = "Race/ethnicity (race)",
+      smoking = "Smoking (smoking)",
+      height = "Height (height)",
+      weight = "Weight (weight)",
+      bmi = "BMI (bmi)",
+      diabetes = "Diabetes (diabetes)",
+      hypertension = "Hypertension (hypertension)",
+      sbp = "Systolic blood pressure (sbp)",
+      ldl = "LDL cholesterol (ldl)",
+      time = "Time since vaccination (time)",
+      log_antibody = "Log-transformed antibody level (log_antibody)"
+    )
+  ) |> 
+  modify_caption("**Summary Statistics for Dat1**")
+```
+
+##### **Comparative Plots**
+
+**Age**
+```{r message = FALSE}
+dat1 |> 
+  ggplot(aes(x = age, y = log_antibody)) +
+  geom_point() +
+  geom_smooth(lwd = 0.5) +
+  labs(
+    title = "Log Antibody vs. Age",
+    x = "Age (years)",
+    y = "Log Antibody"
+  )
+```
+
+**Gender**
+```{r}
+dat1 |> 
+  mutate(gender = as.factor(gender)) |> 
+  ggplot(aes(x = log_antibody, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Log Antibody vs. Gender",
+    x = "Log Antibody",
+    y = "Count",
+    fill = "Gender"
+  )
+```
+
+**Race**
+```{r}
+dat1 |> 
+  mutate(race = as.factor(race)) |> 
+  ggplot(aes(x = log_antibody, fill = race)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Log Antibody vs. Race",
+    x = "Log Antibody",
+    y = "Count",
+    fill = "Race"
+  )
+```
+
+**Smoking**
+```{r}
+dat1 |> 
+  mutate(smoking = as.factor(smoking)) |> 
+  ggplot(aes(x = log_antibody, fill = smoking)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Log Antibody vs. Smoking",
+    x = "Log Antibody",
+    y = "Count",
+    fill = "Smoking"
+  )
+```
+
+**Height**
+```{r}
+dat1 |> 
+  ggplot(aes(x = height, y = log_antibody)) +
+  geom_point() +
+  geom_smooth(lwd = 0.5) +
+  labs(
+    title = "Log Antibody vs. Height",
+    x = "Height",
+    y = "Log Antibody"
+  )
+```
+
+**Weight**
+```{r}
+dat1 |> 
+  ggplot(aes(x = weight, y = log_antibody)) +
+  geom_point() +
+  geom_smooth(lwd = 0.5) +
+  labs(
+    title = "Log Antibody vs. Weight",
+    x = "Weight",
+    y = "Log Antibody"
+  )
+```
+
+**BMI**
+```{r}
+dat1 |> 
+  ggplot(aes(x = bmi, y = log_antibody)) +
+  geom_point() +
+  geom_smooth(lwd = 0.5) +
+  labs(
+    title = "Log Antibody vs. BMI",
+    x = "BMI",
+    y = "Log Antibody"
+  )
+```
+
+**Diabetes**
+```{r}
+dat1 |> 
+  mutate(diabetes = as.factor(diabetes)) |> 
+  ggplot(aes(x = log_antibody, fill = diabetes)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Log Antibody vs. Diabetes",
+    x = "Log Antibody",
+    y = "Count",
+    fill = "Diabetes"
+  )
+```
+
+**Hypertension**
+```{r}
+dat1 |> 
+  mutate(hypertension = as.factor(hypertension)) |> 
+  ggplot(aes(x = log_antibody, fill = hypertension)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Log Antibody vs. Hypertension",
+    x = "Log Antibody",
+    y = "Count",
+    fill = "Hypertension"
+  )
+```
+
+**Systolic Blood Pressure**
+```{r}
+dat1 |> 
+  ggplot(aes(x = sbp, y = log_antibody)) +
+  geom_point() +
+  geom_smooth(lwd = 0.5) +
+  labs(
+    title = "Log Antibody vs. Systolic Blood Pressure",
+    x = "Systolic Blood Pressure",
+    y = "Log Antibody"
+  )
+```
+
+**LDL Cholesterol**
+```{r}
+dat1 |> 
+  ggplot(aes(x = ldl, y = log_antibody)) +
+  geom_point() +
+  geom_smooth(lwd = 0.5) +
+  labs(
+    title = "Log Antibody vs. LDL Cholesterol",
+    x = "LDL Cholesterol",
+    y = "Log Antibody"
+  )
+```
+
+**Time since Vaccination**
+```{r}
+dat1 |> 
+  ggplot(aes(x = time, y = log_antibody)) +
+  geom_point() +
+  geom_smooth(lwd = 0.5) +
+  labs(
+    title = "Log Antibody vs. Time Since Vaccination",
+    x = "Time Since Vaccination",
+    y = "Log Antibody"
+  )
+```
+
+ 
+
+ 
+ 
+ 
+ 
+ 
+

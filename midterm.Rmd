@@ -1,0 +1,34 @@
+---
+title: "Data Science II Midterm"
+author: "Arghya Kannadaguli (ak5357)"
+date: "2025-03-25"
+output: html_document
+---
+
+## **Assignment Description**
+
+A researcher conducted a study to evaluate antibody responses to a newly authorized vaccine. Understanding antibody responses can help inform vaccine effectiveness and identify populations with weaker immune responses. The antibody level measured via dry blood spot (log-transformed) is the primary outcome of interest. The researcher also collected data on potential predictors to understand factors influencing the antibody response. Here is a description of the dataset (dat1.RData): 
+
+| Variable Name (colname) | Description |
+| --- | --- |
+| ID (id) | Participant ID |
+| Age (age) | Age (in years) |
+| Gender (gender) | 1 = Male, 0 = Female |
+| Race/ethnicity (race) | 1 = White, 2 = Asian, 3 = Black, 4 =| Hispanic |
+| Smoking (smoking) | 0 = Never smoked, 1 = Former smoker, 2 = Current| smoker |
+| Height (height) | Height (in centimeters) |
+| Weight (weight) | Weight (in kilograms) |
+| BMI (bmi) | Body Mass Index; BMI = weight (kg) / [height (m)]² |
+| Diabetes (diabetes) | 0 = No, 1 = Yes |
+| Hypertension (hypertension) | 0 = No, 1 = Yes |
+| Systolic blood pressure (SBP) | Systolic blood pressure (mmHg) |
+| LDL cholesterol (LDL) | LDL cholesterol (mg/dL) |
+| Time since vaccination (time) | Time since vaccination (in days) |
+| Log-transformed antibody level (log_antibody) | Response variable |
+
+
+Using this dataset, the researcher planned to build a prediction model of antibody levels, aiming to understand how demographic and clinical factors influence antibody responses and how antibody levels change over time following vaccination. Please help the researcher build this model. 
+
+A few months after the initial data collection, the researcher collected a new, independent dataset (dat2.RData) with the same structure as dat1.RData. Evaluate the robustness and generalizability of your prediction model using the new dataset. Does the model generalize well to this new dataset? If the model does not generalize well, discuss possible reasons. 
+
+## **Exploratory Data Analysis**
