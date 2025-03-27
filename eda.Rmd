@@ -78,13 +78,15 @@ dat1 |>
 ```{r message = FALSE}
 dat1 |> 
   ggplot(aes(x = age, y = log_antibody)) +
-  geom_point() +
+  geom_point(size = 0.3) +
   geom_smooth(lwd = 0.5) +
   labs(
     title = "Log Antibody vs. Age",
     x = "Age (years)",
     y = "Log Antibody"
   )
+
+ggsave("figures/eda_age.png")
 ```
 
 **Gender**
@@ -92,13 +94,15 @@ dat1 |>
 dat1 |> 
   mutate(gender = as.factor(gender)) |> 
   ggplot(aes(x = log_antibody, fill = gender)) +
-  geom_density(alpha = 0.5) +
+  geom_density(alpha = 0.5, lwd = 0.5) +
   labs(
     title = "Log Antibody vs. Gender",
     x = "Log Antibody",
     y = "Count",
     fill = "Gender"
   )
+
+ggsave("figures/eda_gender.png")
 ```
 
 **Race**
@@ -113,6 +117,8 @@ dat1 |>
     y = "Count",
     fill = "Race"
   )
+
+ggsave("figures/eda_race.png")
 ```
 
 **Smoking**
@@ -127,45 +133,53 @@ dat1 |>
     y = "Count",
     fill = "Smoking"
   )
+
+ggsave("figures/eda_smoking.png")
 ```
 
 **Height**
 ```{r}
 dat1 |> 
   ggplot(aes(x = height, y = log_antibody)) +
-  geom_point() +
+  geom_point(size = 0.3) +
   geom_smooth(lwd = 0.5) +
   labs(
     title = "Log Antibody vs. Height",
     x = "Height",
     y = "Log Antibody"
   )
+
+ggsave("figures/eda_height.png")
 ```
 
 **Weight**
 ```{r}
 dat1 |> 
   ggplot(aes(x = weight, y = log_antibody)) +
-  geom_point() +
+  geom_point(size = 0.3) +
   geom_smooth(lwd = 0.5) +
   labs(
     title = "Log Antibody vs. Weight",
     x = "Weight",
     y = "Log Antibody"
   )
+
+ggsave("figures/eda_weight.png")
 ```
 
 **BMI**
 ```{r}
 dat1 |> 
   ggplot(aes(x = bmi, y = log_antibody)) +
-  geom_point() +
+  geom_point(size = 0.3) +
   geom_smooth(lwd = 0.5) +
   labs(
     title = "Log Antibody vs. BMI",
     x = "BMI",
     y = "Log Antibody"
   )
+
+ggsave("figures/eda_bmi.png")
 ```
 
 **Diabetes**
@@ -173,13 +187,15 @@ dat1 |>
 dat1 |> 
   mutate(diabetes = as.factor(diabetes)) |> 
   ggplot(aes(x = log_antibody, fill = diabetes)) +
-  geom_density(alpha = 0.5) +
+  geom_density(alpha = 0.5, lwd = 0.5) +
   labs(
     title = "Log Antibody vs. Diabetes",
     x = "Log Antibody",
     y = "Count",
     fill = "Diabetes"
   )
+
+ggsave("figures/eda_diabetes.png")
 ```
 
 **Hypertension**
@@ -187,52 +203,60 @@ dat1 |>
 dat1 |> 
   mutate(hypertension = as.factor(hypertension)) |> 
   ggplot(aes(x = log_antibody, fill = hypertension)) +
-  geom_density(alpha = 0.5) +
+  geom_density(alpha = 0.5, lwd = 0.5) +
   labs(
     title = "Log Antibody vs. Hypertension",
     x = "Log Antibody",
     y = "Count",
     fill = "Hypertension"
   )
+
+ggsave("figures/eda_hypertension.png")
 ```
 
 **Systolic Blood Pressure**
 ```{r}
 dat1 |> 
   ggplot(aes(x = sbp, y = log_antibody)) +
-  geom_point() +
+  geom_point(size = 0.3) +
   geom_smooth(lwd = 0.5) +
   labs(
     title = "Log Antibody vs. Systolic Blood Pressure",
     x = "Systolic Blood Pressure",
     y = "Log Antibody"
   )
+
+ggsave("figures/eda_sbp.png")
 ```
 
 **LDL Cholesterol**
 ```{r}
 dat1 |> 
   ggplot(aes(x = ldl, y = log_antibody)) +
-  geom_point() +
+  geom_point(size = 0.3) +
   geom_smooth(lwd = 0.5) +
   labs(
     title = "Log Antibody vs. LDL Cholesterol",
     x = "LDL Cholesterol",
     y = "Log Antibody"
   )
+
+ggsave("figures/eda_ldl.png")
 ```
 
 **Time since Vaccination**
 ```{r}
 dat1 |> 
   ggplot(aes(x = time, y = log_antibody)) +
-  geom_point() +
+  geom_point(size = 0.3) +
   geom_smooth(lwd = 0.5) +
   labs(
     title = "Log Antibody vs. Time Since Vaccination",
     x = "Time Since Vaccination",
     y = "Log Antibody"
   )
+
+ggsave("figures/eda_time.png")
 ```
 
  
