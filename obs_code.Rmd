@@ -1,0 +1,198 @@
+---
+title: "Obsolete Code"
+author: "Arghya Kannadaguli (ak5357)"
+date: "2025-03-29"
+output: html_document
+---
+
+```{r}
+gender_plot = dat1_decoded |> 
+  mutate(gender = as.factor(gender)) |> 
+  ggplot(aes(x = log_antibody, fill = gender)) +
+  geom_density(alpha = 0.5, lwd = 0.5) +
+  labs(
+    title = "Log Antibody vs. Gender",
+    x = "Log Antibody",
+    y = "Density",
+    fill = "Gender"
+  )
+
+race_plot = dat1_decoded |> 
+  mutate(race = as.factor(race)) |> 
+  ggplot(aes(x = log_antibody, fill = race)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Log Antibody vs. Race",
+    x = "Log Antibody",
+    y = "Density",
+    fill = "Race"
+  )
+
+smoking_plot = dat1_decoded |> 
+  mutate(smoking = as.factor(smoking)) |> 
+  ggplot(aes(x = log_antibody, fill = smoking)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Log Antibody vs. Smoking",
+    x = "Log Antibody",
+    y = "Density",
+    fill = "Smoking"
+  )
+
+diabetes_plot = dat1_decoded |> 
+  mutate(diabetes = as.factor(diabetes)) |> 
+  ggplot(aes(x = log_antibody, fill = diabetes)) +
+  geom_density(alpha = 0.5, lwd = 0.5) +
+  labs(
+    title = "Log Antibody vs. Diabetes",
+    x = "Log Antibody",
+    y = "Density",
+    fill = "Diabetes"
+  )
+
+hypertension_plot = dat1_decoded |> 
+  mutate(hypertension = as.factor(hypertension)) |> 
+  ggplot(aes(x = log_antibody, fill = hypertension)) +
+  geom_density(alpha = 0.5, lwd = 0.5) +
+  labs(
+    title = "Log Antibody vs. Hypertension",
+    x = "Log Antibody",
+    y = "Density",
+    fill = "Hypertension"
+  )
+
+age_plot = dat1 |> 
+  ggplot(aes(x = age, y = log_antibody)) +
+  geom_point(size = 0.3) +
+  geom_smooth(lwd = 0.5, method = "loess", color = "red") +
+  labs(
+    title = "Log Antibody vs. Age",
+    x = "Age (years)",
+    y = "Log Antibody"
+  )
+
+height_plot = dat1 |> 
+  ggplot(aes(x = height, y = log_antibody)) +
+  geom_point(size = 0.3) +
+  geom_smooth(lwd = 0.5, method = "loess", color = "red") +
+  labs(
+    title = "Log Antibody vs. Height",
+    x = "Height",
+    y = "Log Antibody"
+  )
+
+weight_plot = dat1 |> 
+  ggplot(aes(x = weight, y = log_antibody)) +
+  geom_point(size = 0.3) +
+  geom_smooth(lwd = 0.5, method = "loess", color = "red") +
+  labs(
+    title = "Log Antibody vs. Weight",
+    x = "Weight",
+    y = "Log Antibody"
+  )
+
+bmi_plot = dat1 |> 
+  ggplot(aes(x = bmi, y = log_antibody)) +
+  geom_point(size = 0.3) +
+  geom_smooth(lwd = 0.5, method = "loess", color = "red") +
+  labs(
+    title = "Log Antibody vs. BMI",
+    x = "BMI",
+    y = "Log Antibody"
+  )
+
+sbp_plot = dat1 |> 
+  ggplot(aes(x = sbp, y = log_antibody)) +
+  geom_point(size = 0.3) +
+  geom_smooth(lwd = 0.5, method = "loess", color = "red") +
+  labs(
+    title = "Log Antibody vs. Systolic Blood Pressure",
+    x = "Systolic Blood Pressure",
+    y = "Log Antibody"
+  )
+
+ldl_plot = dat1 |> 
+  ggplot(aes(x = ldl, y = log_antibody)) +
+  geom_point(size = 0.3) +
+  geom_smooth(lwd = 0.5, method = "loess", color = "red") +
+  labs(
+    title = "Log Antibody vs. LDL Cholesterol",
+    x = "LDL Cholesterol",
+    y = "Log Antibody"
+  )
+
+time_plot = dat1 |> 
+  ggplot(aes(x = time, y = log_antibody)) +
+  geom_point(size = 0.3) +
+  geom_smooth(lwd = 0.5, method = "loess", color = "red") +
+  labs(
+    title = "Log Antibody vs. Time Since Vaccination",
+    x = "Time Since Vaccination",
+    y = "Log Antibody"
+  )
+```
+
+##### **Comparative Plots pt. 2**
+
+Prep temporary dataframes to use in ggplot visualizations for exploratory data analysis.
+```{r}
+dat1_categorical = dat1 |> 
+  select(id, gender, race, smoking, hypertension, diabetes, log_antibody) |> 
+  mutate(
+    across(everything(), as.character),
+    across(everything(), as.numeric),
+    gender = case_match(gender, 0 ~ "Male", 1 ~ "Female"),
+    race = case_match(race, 1 ~ "White", 2 ~ "Asian", 3 ~ "Black", 4 ~ "Hispanic"),
+    smoking = case_match(smoking, 0 ~ "Never smoked", 1 ~ "Former smoker", 2 ~ "Current smoker"),
+    hypertension = case_match(hypertension, 0 ~ "No", 1 ~ "Yes"),
+    diabetes = case_match(diabetes, 0 ~ "No", 1 ~ "Yes")
+  ) |> 
+  pivot_longer(
+    cols = -c(id, log_antibody),
+    names_to = "colname",
+    values_to = "value"
+  )
+
+dat1_numeric = dat1 |> 
+  select(-c(gender, race, smoking, hypertension, diabetes)) |> 
+  pivot_longer(
+    cols = -c(id, log_antibody),
+    names_to = "colname",
+    values_to = "value"
+  )
+```
+
+Create visualizations for categorical variables.
+```{r}
+# ggplot(data = dat1_categorical, aes(x = value, y = log_antibody))
+# 
+# 
+# dat1 |> 
+#   ggplot(aes(x = age, y = log_antibody)) +
+#   geom_point(size = 0.3) +
+#   geom_smooth(lwd = 0.5) +
+#   labs(
+#     title = "Log Antibody vs. Age",
+#     x = "Age (years)",
+#     y = "Log Antibody"
+#   )
+# 
+# 
+# dat1 |> 
+#   ggplot(aes(x = log_antibody, fill = hypertension)) +
+#   geom_density(alpha = 0.5, lwd = 0.5) +
+#   labs(
+#     title = "Log Antibody vs. Hypertension",
+#     x = "Log Antibody",
+#     y = "Count",
+#     fill = "Hypertension"
+#   )
+```
+
+
+
+, labels = c("Female", "Male")
+, labels = c("White", "Asian", "Black", "Hispanic")
+, labels = c("Never smoked", "Former smoker", "Current smoker")
+, labels = c("No", "Yes")
+, labels = c("No", "Yes")

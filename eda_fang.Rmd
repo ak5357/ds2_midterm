@@ -1,0 +1,206 @@
+---
+title: "midterm_practice"
+author: "Fang Wang"
+date: "2025-03-25"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+# Library
+```{r library}
+library (caret)
+library(mgcv) 
+library(pdp)
+library(earth)
+library(tidyverse)
+library(rsample)
+setwd("/Users/fangwang/Library/CloudStorage/OneDrive-ColumbiaUniversityIrvingMedicalCenter/Master's_program/Data Science II/Midterm Project")
+```
+
+# Data
+```{r data}
+load("dat1.RData") 
+dat1 = dat1 |> 
+  janitor::clean_names()
+load("dat2.RData")
+dat2 = dat2 |> 
+  janitor::clean_names()
+```
+
+# EDA
+```{r eda}
+# Explore if predictors are continuous or categorical variables:
+sapply(dat1, class)
+# continuous variables:
+## "age"
+## "height"
+## "weight"
+## "bmi"
+## "sbp"
+## "ldl"
+## "time"
+
+# categorical varaibles:
+## gender
+## race
+## smoking
+## diabetes
+## hypertension
+```
+
+# Split dataset
+```{r split}
+# split dataset into training data and testing data:
+set.seed(2025)
+data_split = initial_split(dat1, prop =0.8)
+training_data = training (data_split)
+testing_data = testing (data_split)
+# Cross-validation setup:
+ctrl1 = trainControl(method = "repeatedcv",
+number = 10,
+repeats = 5)
+```
+
+# Create Matrix
+```{r matrix}
+# training_data
+x = model.matrix(log_antibody~ .- id, training_data)[,-1] #remove the first column
+y = training_data$log_antibody
+```
+
+# EDA (continuous variables)
+```{r eda}
+# Get the image parameters of the current trellis graph
+theme1 = trellis.par.get()
+theme1$plot.symbol$col <- rgb(.2, .4, .2, .5)
+theme1$plot.symbol$pch <- 16
+theme1$plot.line$col <- rgb(.8, .1, .1, 1)
+theme1$plot.line$lwd <- 2
+theme1$strip.background$col <- rgb(.0, .2, .6, .2)
+trellis.par.set(theme1)
+featurePlot(x = training_data[, c("age", "height", "weight", "bmi", "sbp", "ldl", "time")], y, plot = "scatter", labels = c("", "Y"),
+type = c("p"), layout = c(4, 2)) #ncol, nrow
+
+ggsave(filename = "Trellis plot for continuous variables.png", plot = last_plot())
+```
+*All scatterplots look like circular clouds — no visible upward or downward trend. No strong linear relationship between these variables and log_antibody.Possibly no clear non-linear relationship either — at least from this visualization. The dots are symmetrically spread around a horizontal center — that’s usually a sign of no obvious association.*
+
+# Correlation Matrix Plot
+```{r}
+corrplot::corrplot(cor(x), method = "circle", type = "full")
+```
+*"height", "weight", and "bmi" are strongly positively correlated with each other — large dark blue circles. "sbp" and "hypertension": also positively correlated. Strong correlations (e.g., weight and bmi) might signal multicollinearity — be careful when using these together in regression models.*
+
+# Elastic Net
+```{r enet}
+enet_fit = train(
+  x = x, 
+  y = y,
+  method = "glmnet",
+  tuneGrid = expand.grid(
+    alpha = seq(0, 1, length = 21),
+    lambda = exp(seq(2, -3, length = 100))
+  ),
+  trControl = ctrl1
+)
+```
+
+
+# PLS
+```{r pls}
+set.seed(2025)
+pls_fit = train(x, y,
+method = "pls",
+tuneGrid = data.frame(ncomp = 1:14),
+trControl = ctrl1,
+preProcess = c("center", "scale"))
+summary(pls_fit)
+
+ggplot(pls_fit, highlight = TRUE) + theme_bw()
+
+pls_fit$bestTune$ncomp #best_ncomp
+```
+
+
+# GAM 
+```{r gam}
+set.seed(2025) # not use gam to do modeling
+# add s() to all continuous predictors:
+gam_model = gam(log_antibody ~ s(age) + s(height) + s(weight) + s(bmi) + s(sbp) + s(ldl) + s(time) + gender + race +
+smoking + diabetes + hypertension,
+data = training_data,
+select = TRUE) #Smooth terms can be shrunk to 0,	EDF = 0 if not useful, Flat line, auto excluded 
+summary(gam_model)
+plot(gam_model, pages=1)
+```
+*1. age (edf = 0.99): The line is almost straight and decreasing → linear negative effect. As age increases, log_antibody slightly decreases.2. height, weight, sbp (edf = 0): These are flat lines → no evidence of effect. The model didn’t assign them any degrees of freedom → not selected (possibly due to select = TRUE).3. bmi (edf ≈ 3.94): Curved relationship: antibody levels increase until BMI ~26, then drop. Indicates non-linear relationship. 4. ldl (edf = 0.5): Almost flat → no meaningful effect. Slight EDF shows very weak trend, but not substantial.5. time (edf ≈ 7.94): Clear non-linear relationship: initial increase, plateau, then decline. Likely indicates antibody waning over time.*
+
+# GAM using caret
+```{r gam_caret}
+set.seed(2025)
+gam_fit = train(
+  log_antibody ~ age + height + weight + bmi + sbp + ldl + time + gender + race + smoking + diabetes + hypertension,
+  data = training_data,
+  method = "gam",
+  trControl = ctrl1
+)
+summary(gam_fit)
+
+model_gam = gam_fit$finalModel
+
+plot(model_gam, pages = 1, shade = TRUE, seWithMean = TRUE)
+```
+*This model output is from a Generalized Additive Model (GAM), where both parametric terms (like gender, race, smoking) and nonlinear smooth terms (like age, BMI, etc.) are used to predict the .outcome variable.*
+*Linear effects: gender, race, smoking status, diabetes, hypertension*
+*Nonlinear effects: age, systolic BP (sbp), LDL, BMI, time, height, weight, all modeled with smooth functions (s())*
+*age, bmi and time have a strong nonlinear relationship with outcome.*
+
+# MARS
+```{r mars}
+set.seed(2025)
+mars_grid = expand.grid(degree = 1:4, nprune = 2:20)
+mars_fit = train(x, y,
+                  method = "earth",
+                  tuneGrid = mars_grid,
+                  trControl = ctrl1)
+ggplot(mars_fit)
+mars_fit$bestTune # nprune: 9; degree: 1
+coef(mars_fit$finalModel)
+```
+*The simplest model (degree = 1) with around 9 terms performs best — lowest RMSE, no overfitting.*
+
+*(Intercept) = 10.29:	Baseline value of the outcome when all other terms are 0.*
+*gender = -0.311:	Being male (if coded as 1) reduces the outcome by 0.31 units compared to female (0).*
+*h(bmi - 26.6) = -0.073:	If BMI > 26.6, the outcome decreases by 0.073 per unit above 26.6. Otherwise, this term is 0.*
+*h(time - 57) = -0.0014:	If time > 57, outcome decreases slightly per unit above 57.*
+*h(57 - time) = -0.0308:	If time < 57, outcome decreases per unit below 57.*
+*h(70 - age) = 0.0207:	If age < 70, outcome increases per unit below 70.*
+*smoking2 = -0.2019:	Belonging to smoking group 2 decreases outcome by 0.20 units.*
+*h(time - 146) = -0.0021:	If time > 146, outcome decreases slightly further.*
+
+# PLP
+```{r plp}
+p1 = pdp::partial(mars_fit, pred.var = c("age"), grid.resolution = 10) |> autoplot()
+p2 = pdp::partial(mars_fit, pred.var = c("bmi"), grid.resolution = 10) |> autoplot()
+p3 = pdp::partial(mars_fit, pred.var = c("time"), grid.resolution = 10) |> autoplot()
+
+p4 = pdp::partial(mars_fit, pred.var = c("bmi", "time"),
+grid.resolution = 10) |>
+pdp::plotPartial(levelplot = FALSE, zlab = "yhat", drape = TRUE, screen = list (z = 40, x = 40))
+
+gridExtra::grid.arrange(p1, p2, p3, ncol =3)
+```
+
+
+# Compare models:
+```{r compare}
+resamp = resamples(list(PLS =pls_fit,
+                        GAM = gam_fit, 
+                        MARS = mars_fit))
+summary(resamp)
+
+bwplot(resamp, metric = "RMSE")
+```
+
+
+

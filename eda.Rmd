@@ -12,6 +12,7 @@ library(dplyr)
 library(ggplot2)
 library(gt)
 library(gtsummary)
+library(ggpubr)
 
 # KNIT SETTINGS
 knitr::opts_chunk$set(
@@ -44,11 +45,23 @@ dat1 = as_tibble(dat1) |>
   janitor::clean_names()
 dat2 = as_tibble(dat2) |> 
   janitor::clean_names()
+
+dat1_decoded = dat1 |> 
+  mutate(
+    across(c(gender, race, smoking, hypertension, diabetes), as.character),
+    across(c(gender, race, smoking, hypertension, diabetes), as.numeric),
+    gender = factor(case_match(gender, 0 ~ "Male", 1 ~ "Female"), levels = c("Male", "Female")),
+    race = factor(case_match(race, 1 ~ "White", 2 ~ "Asian", 3 ~ "Black", 4 ~ "Hispanic"), levels = c("White", "Asian", "Black", "Hispanic")),
+    smoking = factor(case_match(smoking, 0 ~ "Never smoked", 1 ~ "Former smoker", 2 ~ "Current smoker"), levels = c("Never smoked", "Former smoker", "Current smoker")),
+    hypertension = factor(case_match(hypertension, 0 ~ "No", 1 ~ "Yes"), levels = c("No", "Yes")),
+    diabetes = factor(case_match(diabetes, 0 ~ "No", 1 ~ "Yes"), levels = c("No", "Yes"))
+  )
 ```
 
 ##### **Summary Statistics**
 ```{r message = FALSE}
-dat1 |> 
+dat1_decoded |> 
+  select(-id) |> 
   tbl_summary(
     statistic = list (all_continuous() ~ "{min} - {max} | Mean: {mean} (SD: {sd})", 
                       all_categorical() ~ "{n} ({p}%)"),
@@ -69,199 +82,91 @@ dat1 |>
       log_antibody = "Log-transformed antibody level (log_antibody)"
     )
   ) |> 
-  modify_caption("**Summary Statistics for Dat1**")
+  modify_caption("**Summary Statistics for Dat1**") # |> 
+  # as_gt() |> 
+  # gtsave("figures/summary_table.png")
 ```
 
 ##### **Comparative Plots**
 
-**Age**
+**Categorical Variabes**
 ```{r message = FALSE}
-dat1 |> 
-  ggplot(aes(x = age, y = log_antibody)) +
-  geom_point(size = 0.3) +
-  geom_smooth(lwd = 0.5) +
-  labs(
-    title = "Log Antibody vs. Age",
-    x = "Age (years)",
-    y = "Log Antibody"
-  )
+cat_plot = function(var, label, df = dat1_decoded){
+  output_plot = dat1_decoded |> 
+    ggplot(aes(x = log_antibody, fill = !!sym(var))) +
+    geom_density(alpha = 0.5, lwd = 0.5) +
+    labs(
+      title = paste0("Log Antibody vs. ", label),
+      x = "Log Antibody",
+      y = "Density",
+      fill = label
+    )
+  
+  return(output_plot)
+}
 
-ggsave("figures/eda_age.png")
+gender_plot = cat_plot("gender", "Gender", dat1_decoded)
+race_plot = cat_plot("race", "Race", dat1_decoded)
+smoking_plot = cat_plot("smoking", "Smoking Status", dat1_decoded)
+hypertension_plot = cat_plot("hypertension", "Hypertension", dat1_decoded)
+diabetes_plot = cat_plot("diabetes", "Diabetes", dat1_decoded)
 ```
 
-**Gender**
+**Numeric Variables**
 ```{r}
-dat1 |> 
-  mutate(gender = as.factor(gender)) |> 
-  ggplot(aes(x = log_antibody, fill = gender)) +
-  geom_density(alpha = 0.5, lwd = 0.5) +
-  labs(
-    title = "Log Antibody vs. Gender",
-    x = "Log Antibody",
-    y = "Count",
-    fill = "Gender"
-  )
+num_plot = function(var, label, xlab, df = dat1_decoded){
+  output_plot = dat1 |> 
+    ggplot(aes(x = !!sym(var), y = log_antibody)) +
+    geom_point(size = 0.3) +
+    geom_smooth(lwd = 0.5, method = "loess", color = "red") +
+    labs(
+      title = paste0("Log Antibody vs. ", label),
+      x = xlab,
+      y = "Log Antibody"
+    )
+  
+  return(output_plot)
+}
 
-ggsave("figures/eda_gender.png")
+age_plot = num_plot("age", "Age", "Age (years)", dat1)
+height_plot = num_plot("height", "Height", "Height", dat1)
+weight_plot = num_plot("weight", "Weight", "Weight", dat1)
+bmi_plot = num_plot("bmi", "BMI", "Body Mass Index", dat1)
+sbp_plot = num_plot("sbp", "SBP", "Systolic Blood Pressure", dat1)
+ldl_plot = num_plot("ldl", "LDL Cholesterol", "LDL Cholesterol", dat1)
+time_plot = num_plot("time", "Time Since Vaccination", "Time Since Vaccination", dat1)
 ```
 
-**Race**
+##### **Combine Plots into Figures**
+
 ```{r}
-dat1 |> 
-  mutate(race = as.factor(race)) |> 
-  ggplot(aes(x = log_antibody, fill = race)) +
-  geom_density(alpha = 0.5) +
-  labs(
-    title = "Log Antibody vs. Race",
-    x = "Log Antibody",
-    y = "Count",
-    fill = "Race"
-  )
+cat_vars_plot = ggarrange(gender_plot, race_plot, smoking_plot, hypertension_plot, diabetes_plot, nrow = 2, ncol = 3)
+cat_vars_plot
+# manually export to save multi-plot figure
 
-ggsave("figures/eda_race.png")
+cont_vars_plot = ggarrange(age_plot, height_plot, weight_plot, bmi_plot, sbp_plot, ldl_plot, time_plot, nrow = 3, ncol= 3)
+cont_vars_plot
+# manually export to save multi-plot figure
 ```
 
-**Smoking**
-```{r}
-dat1 |> 
-  mutate(smoking = as.factor(smoking)) |> 
-  ggplot(aes(x = log_antibody, fill = smoking)) +
-  geom_density(alpha = 0.5) +
-  labs(
-    title = "Log Antibody vs. Smoking",
-    x = "Log Antibody",
-    y = "Count",
-    fill = "Smoking"
-  )
 
-ggsave("figures/eda_smoking.png")
-```
 
-**Height**
-```{r}
-dat1 |> 
-  ggplot(aes(x = height, y = log_antibody)) +
-  geom_point(size = 0.3) +
-  geom_smooth(lwd = 0.5) +
-  labs(
-    title = "Log Antibody vs. Height",
-    x = "Height",
-    y = "Log Antibody"
-  )
 
-ggsave("figures/eda_height.png")
-```
 
-**Weight**
-```{r}
-dat1 |> 
-  ggplot(aes(x = weight, y = log_antibody)) +
-  geom_point(size = 0.3) +
-  geom_smooth(lwd = 0.5) +
-  labs(
-    title = "Log Antibody vs. Weight",
-    x = "Weight",
-    y = "Log Antibody"
-  )
 
-ggsave("figures/eda_weight.png")
-```
 
-**BMI**
-```{r}
-dat1 |> 
-  ggplot(aes(x = bmi, y = log_antibody)) +
-  geom_point(size = 0.3) +
-  geom_smooth(lwd = 0.5) +
-  labs(
-    title = "Log Antibody vs. BMI",
-    x = "BMI",
-    y = "Log Antibody"
-  )
 
-ggsave("figures/eda_bmi.png")
-```
 
-**Diabetes**
-```{r}
-dat1 |> 
-  mutate(diabetes = as.factor(diabetes)) |> 
-  ggplot(aes(x = log_antibody, fill = diabetes)) +
-  geom_density(alpha = 0.5, lwd = 0.5) +
-  labs(
-    title = "Log Antibody vs. Diabetes",
-    x = "Log Antibody",
-    y = "Count",
-    fill = "Diabetes"
-  )
 
-ggsave("figures/eda_diabetes.png")
-```
 
-**Hypertension**
-```{r}
-dat1 |> 
-  mutate(hypertension = as.factor(hypertension)) |> 
-  ggplot(aes(x = log_antibody, fill = hypertension)) +
-  geom_density(alpha = 0.5, lwd = 0.5) +
-  labs(
-    title = "Log Antibody vs. Hypertension",
-    x = "Log Antibody",
-    y = "Count",
-    fill = "Hypertension"
-  )
 
-ggsave("figures/eda_hypertension.png")
-```
 
-**Systolic Blood Pressure**
-```{r}
-dat1 |> 
-  ggplot(aes(x = sbp, y = log_antibody)) +
-  geom_point(size = 0.3) +
-  geom_smooth(lwd = 0.5) +
-  labs(
-    title = "Log Antibody vs. Systolic Blood Pressure",
-    x = "Systolic Blood Pressure",
-    y = "Log Antibody"
-  )
 
-ggsave("figures/eda_sbp.png")
-```
 
-**LDL Cholesterol**
-```{r}
-dat1 |> 
-  ggplot(aes(x = ldl, y = log_antibody)) +
-  geom_point(size = 0.3) +
-  geom_smooth(lwd = 0.5) +
-  labs(
-    title = "Log Antibody vs. LDL Cholesterol",
-    x = "LDL Cholesterol",
-    y = "Log Antibody"
-  )
 
-ggsave("figures/eda_ldl.png")
-```
 
-**Time since Vaccination**
-```{r}
-dat1 |> 
-  ggplot(aes(x = time, y = log_antibody)) +
-  geom_point(size = 0.3) +
-  geom_smooth(lwd = 0.5) +
-  labs(
-    title = "Log Antibody vs. Time Since Vaccination",
-    x = "Time Since Vaccination",
-    y = "Log Antibody"
-  )
 
-ggsave("figures/eda_time.png")
-```
 
- 
-
- 
  
  
  

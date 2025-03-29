@@ -1,0 +1,100 @@
+---
+title: "models_cm3341"
+author: "Carolina Montes Garcia"
+date: '`r Sys.Date()`'
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(tidyverse)
+library(janitor)
+library(caret)
+library(glmnet)
+library(ggplot2)
+library(corrplot)
+library(patchwork)
+library(tidymodels)
+
+```
+# Models
+
+## Elastic Net
+
+### Import and Clean data
+```{r}
+load("data/dat1.RData")
+dat1 = dat1 %>% clean_names()%>% 
+  mutate(
+    gender = as.factor(gender),
+    race = as.factor(race),
+    smoking = as.factor(smoking),
+    diabetes = as.factor(diabetes),
+    hypertension = as.factor(hypertension)
+  )%>%na.omit()
+
+str(dat1)
+
+```
+
+
+### Set ctrl1 to be used for all models
+```{r}
+ctrl1 = trainControl (method = "cv",
+number = 10,
+selectionFunction = "best")
+```
+
+### Set seed and split data
+```{r}
+set.seed(2025)
+
+data_split = initial_split(dat1, prop = 0.8)
+
+training_dat1 = training(data_split)
+testing_dat1 = testing(data_split)
+
+```
+
+### Create training and testing matrices
+```{r}
+x_train = model.matrix(log_antibody ~ ., training_dat1)[, -1]
+y_train = training_dat1$log_antibody
+
+
+x_test = model.matrix(log_antibody ~ ., testing_dat1)[, -1]
+y_test = testing_dat1$log_antibody
+```
+
+### Train elastic net model
+```{r}
+enet_fit = train(
+    x = x_train,
+    y = y_train,
+    method = "glmnet",
+    tuneGrid = expand.grid(
+        alpha = seq(0, 1, length = 21),
+        lambda = exp(seq(9, 0, length = 100))
+    ),
+    trControl = ctrl1
+)
+
+```
+
+### Visualize elastic net training data
+```{r}
+plot(enet_fit, xTrans = log)
+```
+
+### Pull out the optimal tuning parameter
+```{r}
+enet_fit$bestTune
+```
+*The elastic net model selection process identified an optimal alpha of 0, indicating that ridge regression (L2 regularization) is preferred over lasso regression (L1 regularization) or a mixed approach. This suggests that the predictors included in the model are likely correlated (e.g., height, weight, BMI). This may also suggest that all predictors potentially offer relevant information for predicting log-transformed antibody levels, since no predictors were entirely dropped.*
+
