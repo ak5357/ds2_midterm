@@ -75,7 +75,8 @@ dat1 = as_tibble(dat1) |>
   mutate(across(c(gender, race, smoking, hypertension, diabetes), as.factor))
 
 dat2 = as_tibble(dat2) |> 
-  janitor::clean_names()
+  janitor::clean_names() |> 
+  mutate(across(c(gender, race, smoking, hypertension, diabetes), as.factor))
 
 dat1_decoded = dat1 |> 
   mutate(
@@ -92,7 +93,7 @@ head(dat1_decoded, 5) |>
   knitr::kable(digits = 2)
 ```
 
-## **Exploratory Data Analysis**
+## **General Exploratory Data Analysis (EDA)**
 
 ##### **Summary Statistics**
 ```{r message = FALSE}
@@ -128,26 +129,28 @@ dat1_decoded |>
 **Categorical Variable Barplots**
 ```{r}
 p_gender = ggplot(dat1_decoded, aes(x = gender)) + 
-  geom_bar(fill = "skyblue") + 
-  labs(title = "Gender Distribution", x = "Gender", y = "Count")
+  geom_bar(fill = "skyblue", color = "black", lwd = 0.5) + 
+  labs(title = "Gender\nDistribution", x = "Gender", y = "Count")
 
 p_race = ggplot(dat1_decoded, aes(x = race)) + 
-  geom_bar(fill= "orange") + 
-  labs(title = "Race/Ethnicity Distribution", x = "Race/Ethnicity", y = "Count")
+  geom_bar(fill= "orange", color = "black", lwd = 0.5) + 
+  labs(title = "Race/Ethnicity\nDistribution", x = "Race/Ethnicity", y = "Count")
 
-p_smoking = ggplot(dat1_decoded, aes(x = smoking)) + 
-  geom_bar(fill = "skyblue") + 
-  labs(title = "Smoking Status", x = "Smoking", y = "Count")
+p_smoking = dat1_decoded |> 
+  mutate(smoking = fct_rev(as.factor(str_replace(smoking, " ", "\n")))) |> 
+  ggplot(aes(x = smoking)) + 
+  geom_bar(fill = "skyblue", color = "black", lwd = 0.5) + 
+  labs(title = "Smoking Status\nDistribution", x = "Smoking", y = "Count")
 
 p_diabetes = ggplot(dat1_decoded, aes(x = diabetes)) + 
-  geom_bar(fill = "orange") + 
-  labs(title = "Diabetes Status", x = "Diabetes", y = "Count")
+  geom_bar(fill = "orange", color = "black", lwd = 0.5) + 
+  labs(title = "Diabetes Status\nDistribution", x = "Diabetes", y = "Count")
 
 p_hypertension = ggplot(dat1_decoded, aes(x = hypertension)) + 
-  geom_bar(fill = "skyblue") + 
-  labs(title = "Hypertension Status", x = "Hypertension", y = "Count")
+  geom_bar(fill = "skyblue", color = "black", lwd = 0.5) + 
+  labs(title = "Hypertension Status\nDistribution", x = "Hypertension", y = "Count")
 
-barplot_combined = ggarrange(p_gender, p_race, p_smoking, p_diabetes, p_hypertension, nrow = 3, ncol = 2)
+barplot_combined = ggarrange(p_gender, p_race, p_smoking, p_diabetes, p_hypertension, nrow = 2, ncol = 3)
 
 barplot_combined
 ```
@@ -156,35 +159,48 @@ barplot_combined
 ```{r}
 p_age = ggplot(dat1_decoded, aes(x = age)) + 
   geom_histogram(fill = "skyblue", color = "black", lwd = 0.5) + 
-  labs(title = "Age Distribution", x = "Age", y = "Count")
+  labs(title = "Age\nDistribution", x = "Age", y = "Count")
 
 p_height = ggplot(dat1_decoded, aes(x = height)) + 
   geom_histogram(fill = "orange", color = "black", lwd = 0.5) + 
-  labs(title = "Height Distribution", x = "Height", y = "Count")
+  labs(title = "Height\nDistribution", x = "Height", y = "Count")
 
 p_weight = ggplot(dat1_decoded, aes(x = weight)) + 
   geom_histogram(fill = "skyblue", color = "black", lwd = 0.5) + 
-  labs(title = "Weight Distribution", x = "Weight", y = "Count")
+  labs(title = "Weight\nDistribution", x = "Weight", y = "Count")
 
 p_bmi = ggplot(dat1_decoded, aes(x = bmi)) + 
   geom_histogram(fill = "orange", color = "black", lwd = 0.5) + 
-  labs(title = "BMI Distribution", x = "BMI", y = "Count")
+  labs(title = "Body Mass Index\nDistribution", x = "BMI", y = "Count")
 
 p_sbp = ggplot(dat1_decoded, aes(x = sbp)) + 
   geom_histogram(fill = "skyblue", color = "black", lwd = 0.5) + 
-  labs(title = "SBP Distribution", x = "Systolic Blood Pressure", y = "Count")
+  labs(title = "Systolic Blood Pressure\nDistribution", x = "Systolic Blood Pressure", y = "Count")
 
 p_ldl = ggplot(dat1_decoded, aes(x = ldl)) + 
   geom_histogram(fill = "orange", color = "black", lwd = 0.5) + 
-  labs(title = "LDL Cholesterol Distribution", x = "LDL Cholesterol", y = "Count")
+  labs(title = "LDL Cholesterol\nDistribution", x = "LDL Cholesterol", y = "Count")
 
 p_time = ggplot(dat1_decoded, aes(x = time)) + 
   geom_histogram(fill = "skyblue", color = "black", lwd = 0.5) + 
-  labs(title = "Time Since Vax Distribution", x = "Time Since Vaccination", y = "Count")
+  labs(title = "Time Since Vax\nDistribution", x = "Time Since Vaccination", y = "Count")
 
 histogram_combined = ggarrange(p_age, p_height, p_weight, p_bmi, p_sbp, p_ldl, p_time, nrow = 3, ncol = 3)
 
 histogram_combined
+```
+
+## **Post-Split EDA** 
+
+##### **Split Dataset**
+```{r split}
+# split dataset into training data and testing data:
+set.seed(2025)
+data_split = initial_split(dat1, prop =0.8)
+training_data = training (data_split)
+testing_data = testing (data_split)
+# Cross-validation setup:
+ctrl1 = trainControl(method = "cv", number = 10)
 ```
 
 ##### **Bivariate Plots**
@@ -193,7 +209,7 @@ histogram_combined
 ```{r message = FALSE}
 # Create function for plot generation
 cat_plot = function(var, label, df = dat1_decoded){
-  output_plot = dat1_decoded |> 
+  output_plot = df |> 
     ggplot(aes(x = log_antibody, fill = !!sym(var))) +
     geom_density(alpha = 0.5, lwd = 0.5) +
     labs(
@@ -206,15 +222,18 @@ cat_plot = function(var, label, df = dat1_decoded){
   return(output_plot)
 }
 
+training_data_decoded = dat1_decoded |> 
+  filter(id %in% training_data$id)
+
 # Generate Plots
-gender_plot = cat_plot("gender", "Gender", dat1_decoded)
-race_plot = cat_plot("race", "Race", dat1_decoded)
-smoking_plot = cat_plot("smoking", "Smoking Status", dat1_decoded)
-hypertension_plot = cat_plot("hypertension", "Hypertension", dat1_decoded)
-diabetes_plot = cat_plot("diabetes", "Diabetes", dat1_decoded)
+gender_plot = cat_plot("gender", "Gender", training_data_decoded)
+race_plot = cat_plot("race", "Race", training_data_decoded)
+smoking_plot = cat_plot("smoking", "Smoking Status", training_data_decoded)
+hypertension_plot = cat_plot("hypertension", "Hypertension", training_data_decoded)
+diabetes_plot = cat_plot("diabetes", "Diabetes", training_data_decoded)
 
 # Display multi-plot figure (manually exporting to save multi-plot figure)
-cat_vars_plot = ggarrange(gender_plot, race_plot, smoking_plot, hypertension_plot, diabetes_plot, nrow = 2, ncol = 3)
+cat_vars_plot = ggarrange(gender_plot, race_plot, smoking_plot, hypertension_plot, diabetes_plot, nrow = 3, ncol = 2)
 cat_vars_plot
 ```
 
@@ -227,15 +246,15 @@ theme1$plot.line$col <- rgb(.8, .1, .1, 1)
 theme1$plot.line$lwd <- 2
 theme1$strip.background$col <- rgb(.0, .2, .6, .2)
 trellis.par.set(theme1)
-featurePlot(x = dat1[, c("age", "height", "weight", "bmi", "sbp", "ldl", "time")], dat1$log_antibody, plot = "scatter", labels = c("", "Y"),
+featurePlot(x = training_data[, c("age", "height", "weight", "bmi", "sbp", "ldl", "time")], training_data$log_antibody, plot = "scatter", labels = c("", "Y"),
 type = c("p"), layout = c(4, 2)) #ncol, nrow
 ```
 
 **Scatterplots for Response with Numeric Variables**
 ```{r}
 # Create function for plot generation
-num_plot = function(var, label, xlab, df = dat1_decoded){
-  output_plot = dat1 |> 
+num_plot = function(var, label, xlab, df = dat1){
+  output_plot = df |> 
     ggplot(aes(x = !!sym(var), y = log_antibody)) +
     geom_point(size = 0.3) +
     geom_smooth(lwd = 0.5, method = "loess", color = "red") +
@@ -249,13 +268,13 @@ num_plot = function(var, label, xlab, df = dat1_decoded){
 }
 
 # Generate Plots
-age_plot = num_plot("age", "Age", "Age (years)", dat1)
-height_plot = num_plot("height", "Height", "Height", dat1)
-weight_plot = num_plot("weight", "Weight", "Weight", dat1)
-bmi_plot = num_plot("bmi", "BMI", "Body Mass Index", dat1)
-sbp_plot = num_plot("sbp", "SBP", "Systolic Blood Pressure", dat1)
-ldl_plot = num_plot("ldl", "LDL Cholesterol", "LDL Cholesterol", dat1)
-time_plot = num_plot("time", "Time Since Vaccination", "Time Since Vaccination", dat1)
+age_plot = num_plot("age", "Age", "Age (years)", training_data)
+height_plot = num_plot("height", "Height", "Height", training_data)
+weight_plot = num_plot("weight", "Weight", "Weight", training_data)
+bmi_plot = num_plot("bmi", "BMI", "Body Mass Index", training_data)
+sbp_plot = num_plot("sbp", "SBP", "Systolic Blood Pressure", training_data)
+ldl_plot = num_plot("ldl", "LDL", "LDL Cholesterol", training_data)
+time_plot = num_plot("time", "Time", "Time Since Vaccination", training_data)
 
 # Display multi-plot figure (manually exporting to save multi-plot figure)
 cont_vars_plot = ggarrange(age_plot, height_plot, weight_plot, bmi_plot, sbp_plot, ldl_plot, time_plot, nrow = 3, ncol= 3)
@@ -269,17 +288,6 @@ corrplot::corrplot(cor(dat1_x_matrix), method = "circle", type = "full")
 ```
 
 ## **Model Training**
-
-##### **Split Dataset**
-```{r split}
-# split dataset into training data and testing data:
-set.seed(2025)
-data_split = initial_split(dat1, prop =0.8)
-training_data = training (data_split)
-testing_data = testing (data_split)
-# Cross-validation setup:
-ctrl1 = trainControl(method = "cv", number = 10)
-```
 
 ##### **Create Model Matrix**
 ```{r matrix}
@@ -320,7 +328,7 @@ enet_fit = train(
     method = "glmnet",
     tuneGrid = expand.grid(
         alpha = seq(0, 1, length = 21),
-        lambda = exp(seq(9, 0, length = 100))
+        lambda = exp(seq(9, -3, length = 100))
     ),
     trControl = ctrl1
 )
@@ -414,6 +422,14 @@ Visualize.
 ggplot(mars_fit)
 ```
 
+```{r}
+p1 = pdp::partial(mars_fit, pred.var = c("age"), grid.resolution = 10) |> autoplot()
+p2 = pdp::partial(mars_fit, pred.var = c("bmi"), grid.resolution = 10) |> autoplot()
+p3 = pdp::partial(mars_fit, pred.var = c("time"), grid.resolution = 10) |> autoplot()
+
+gridExtra::grid.arrange(p1, p2, p3, ncol =3)
+```
+
 ## **Model Selection**
 
 ##### **Comparing Models**
@@ -436,7 +452,7 @@ bwplot(resamp, metric = "RMSE")
 ```{r}
 test_x = model.matrix(log_antibody ~ ., testing_data)[, -1]
 gam_pred_dat1 = predict(gam_fit, newdata = testing_data)
-gam_rmse_dat1 = sqrt(mean((gam_pred - testing_data$log_antibody)^2))
+gam_rmse_dat1 = sqrt(mean((gam_pred_dat1 - testing_data$log_antibody)^2))
 
 gam_rmse_dat1
 ```
@@ -446,7 +462,7 @@ gam_rmse_dat1
 ```{r}
 dat2_x = model.matrix(log_antibody ~ ., dat2)[, -1]
 gam_pred_dat2 = predict(gam_fit, newdata = dat2)
-gam_rmse_dat2 = sqrt(mean((gam_pred - dat2$log_antibody)^2))
+gam_rmse_dat2 = sqrt(mean((gam_pred_dat2 - dat2$log_antibody)^2))
 
 gam_rmse_dat2
 ```
